@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SpeedRacer | Ultimate Type Experience</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <style>
@@ -19,7 +20,16 @@
             --error: #ff4e50;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            outline: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
         body {
             font-family: 'Inter', -apple-system, system-ui, sans-serif;
             background: radial-gradient(circle at top right, #1a1a3a, #050510);
@@ -102,9 +112,46 @@
         }
         .modal-text { color: var(--text-muted); margin-bottom: 25px; line-height: 1.6; }
         .modal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .user-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 100;
+        }
+        .user-name {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .logout-btn {
+            background: rgba(255, 78, 80, 0.1);
+            color: #ff4e50;
+            border: 1px solid rgba(255, 78, 80, 0.2);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: rgba(255, 78, 80, 0.2);
+        }
     </style>
 </head>
 <body>
+
+<div class="user-info" id="userInfo" style="display: none;">
+    <span class="user-name" id="userName"></span>
+    <button class="logout-btn" onclick="logout()">Выйти</button>
+</div>
 
 <div class="container">
     <div id="lobby" class="game-card" style="max-width: 450px; margin: 100px auto;">
@@ -183,7 +230,53 @@
     };
 
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.database();
+
+    // Защита от копирования кода
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 's' || e.key === 'c' || e.key === 'i')) {
+            e.preventDefault();
+            return false;
+        }
+        if (e.key === 'F12') {
+            e.preventDefault();
+            return false;
+        }
+    });
+    document.addEventListener('selectstart', e => {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+        }
+    });
+
+    // Проверка авторизации
+    let currentUser = null;
+    
+    auth.onAuthStateChanged(async user => {
+        if (!user) {
+            // Пользователь не авторизован, перенаправляем на страницу входа
+            window.location.href = 'auth.html';
+        } else {
+            currentUser = user;
+            // Показываем информацию о пользователе
+            document.getElementById('userInfo').style.display = 'flex';
+            document.getElementById('userName').textContent = user.displayName || user.email;
+            
+            // Записываем активность пользователя
+            await db.ref(`users/${user.uid}`).update({
+                lastActivity: Date.now()
+            });
+        }
+    });
+
+    // Функция выхода
+    function logout() {
+        auth.signOut().then(() => {
+            window.location.href = 'auth.html';
+        });
+    }
 
     const phrases = [
         "Иногда полезно взглянуть на привычные вещи под другим углом. Простая прогулка может дать свежие идеи.",
