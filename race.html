@@ -790,7 +790,7 @@
                     <span class="stat-label">💨 WPM</span>
                 </div>
                 <div class="stat-item">
-                    <span id="timer" class="stat-val">01:30</span>
+                    <span id="timer" class="stat-val">--:--</span>
                     <span class="stat-label">⏱️ ОСТАЛОСЬ</span>
                 </div>
                 <div class="stat-item">
@@ -887,7 +887,6 @@
 
     const wordsByLanguage = {
         ru: [
-            // Распространенные слова
             "как", "это", "все", "она", "так", "его", "но", "да", "ты", "мы", "вы", "он", "они",
             "быть", "мочь", "наш", "весь", "год", "мой", "когда", "который", "один", "два", "где",
             "жизнь", "день", "рука", "раз", "дело", "вид", "голова", "дом", "сила", "пора", "слово",
@@ -935,43 +934,33 @@
             "past", "present", "moment", "chance", "opportunity", "choice", "freedom", "truth"
         ],
         es: [
-            // Palabras comunes
             "el", "la", "de", "que", "y", "en", "un", "ser", "se", "no", "haber", "por", "con",
             "su", "para", "como", "estar", "tener", "le", "lo", "todo", "pero", "más", "hacer",
             "o", "poder", "decir", "este", "ir", "otro", "ese", "si", "me", "ya", "ver", "dar",
-            // Acciones
             "saber", "querer", "llegar", "pasar", "deber", "poner", "parecer", "quedar", "creer",
             "hablar", "llevar", "dejar", "seguir", "encontrar", "llamar", "venir", "pensar", "salir",
             "volver", "tomar", "conocer", "vivir", "sentir", "tratar", "mirar", "contar", "empezar",
-            // Descripciones
             "grande", "bueno", "nuevo", "primero", "largo", "mucho", "mismo", "pequeño", "otro",
             "último", "alto", "mismo", "joven", "viejo", "blanco", "negro", "rojo", "azul", "verde",
-            // Lugares y objetos
             "tiempo", "año", "día", "cosa", "hombre", "mundo", "vida", "mano", "parte", "niño",
             "mujer", "lugar", "trabajo", "semana", "caso", "punto", "empresa", "número", "grupo",
             "problema", "agua", "habitación", "dinero", "historia", "libro", "palabra", "área",
-            // Tecnología
             "ordenador", "programa", "código", "datos", "archivo", "sistema", "red", "internet",
             "sitio", "aplicación", "desarrollo", "proyecto", "tarea", "solución", "algoritmo",
             "función", "método", "clase", "objeto", "variable", "bucle", "condición",
-            // Conceptos abstractos
             "idea", "pensamiento", "sentimiento", "amor", "esperanza", "sueño", "meta", "éxito",
             "victoria", "felicidad", "alegría", "miedo", "poder", "energía", "conocimiento",
             "experiencia", "futuro", "pasado", "presente", "momento", "oportunidad", "libertad"
         ],
         fr: [
-            // Mots communs
             "le", "de", "un", "être", "et", "à", "il", "avoir", "ne", "je", "son", "que", "se",
             "qui", "ce", "dans", "en", "du", "elle", "au", "pour", "pas", "que", "vous", "par",
             "sur", "faire", "plus", "dire", "me", "on", "mon", "lui", "nous", "comme", "mais",
-            // Actions
             "aller", "voir", "pouvoir", "savoir", "vouloir", "venir", "falloir", "devoir", "croire",
             "trouver", "donner", "prendre", "parler", "aimer", "passer", "mettre", "demander",
             "tenir", "sembler", "laisser", "rester", "penser", "entrer", "sortir", "vivre",
-            // Descriptions
             "grand", "petit", "bon", "nouveau", "jeune", "vieux", "beau", "blanc", "noir", "rouge",
             "bleu", "vert", "long", "court", "haut", "bas", "rapide", "lent", "fort", "faible",
-            // Lieux et objets
             "temps", "année", "jour", "chose", "homme", "monde", "vie", "main", "partie", "enfant",
             "femme", "lieu", "travail", "semaine", "cas", "point", "entreprise", "nombre", "groupe",
             "problème", "eau", "chambre", "argent", "histoire", "livre", "mot", "zone",
@@ -985,15 +974,13 @@
             "expérience", "futur", "passé", "présent", "moment", "chance", "liberté", "vérité"
         ],
         de: [
-            // Häufige Wörter
             "der", "die", "und", "in", "den", "von", "zu", "das", "mit", "sich", "des", "auf",
             "für", "ist", "im", "dem", "nicht", "ein", "eine", "als", "auch", "es", "an", "werden",
             "aus", "er", "hat", "dass", "sie", "nach", "wird", "bei", "einer", "um", "am", "sind",
-            // Aktionen
+
             "sein", "haben", "werden", "können", "müssen", "sagen", "geben", "kommen", "sollen",
             "wollen", "machen", "gehen", "wissen", "sehen", "lassen", "stehen", "finden", "bleiben",
             "liegen", "heißen", "denken", "nehmen", "tun", "dürfen", "glauben", "halten", "nennen",
-            // Beschreibungen
             "groß", "klein", "gut", "neu", "jung", "alt", "schön", "weiß", "schwarz", "rot",
             "blau", "grün", "lang", "kurz", "hoch", "niedrig", "schnell", "langsam", "stark",
             // Orte und Objekte
@@ -1138,14 +1125,22 @@
         });
         
         d.innerHTML = h;
+
+        // Показываем рассчитанное время
+        const wordCount = state.words.length;
+        const timeLimit = calculateTimeLimit(wordCount);
+        const minutes = Math.floor(timeLimit / 60);
+        const seconds = timeLimit % 60;
+        document.getElementById('timer').innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
 
     async function createRoom() {
         const n = document.getElementById('playerName').value.trim() || "Гонщик";
         const r = Math.random().toString(36).substring(2, 6).toUpperCase();
-        state = {...state, roomID: r, playerName: n, isHost: true, isSolo: false};
+        const generatedText = getRandomPhrase(); // Генерируем текст
+        state = {...state, roomID: r, playerName: n, isHost: true, isSolo: false, text: generatedText};
         await db.ref('rooms/' + r).set({
-            text: getRandomPhrase(),
+            text: generatedText,
             language: selectedLanguage,
             status: 'waiting', players: {[n]: {wordIndex: 0, wpm: 0, finished: false}}
         });
@@ -1177,7 +1172,9 @@
             showNotification('❌ Комната не найдена!');
             return;
         }
-        state = {...state, roomID: r, playerName: n, isHost: false, isSolo: false};
+        const roomData = snap.val();
+        state = {...state, roomID: r, playerName: n, isHost: false, isSolo: false, text: roomData.text};
+        if (roomData.language) selectedLanguage = roomData.language;
         await db.ref(`rooms/${r}/players/${n}`).update({wordIndex: 0, wpm: 0, finished: false});
         initView();
         listen(r);
@@ -1236,6 +1233,16 @@
         }, 1000);
     }
 
+    function calculateTimeLimit(wordCount) {
+        // Расчет времени на основе количества слов
+        // Формула: (слова / средняя_скорость_WPM) * 60 + запас
+        // Средняя скорость: 30 WPM (комфортная для большинства)
+        // Запас: 30 секунд
+        const baseTime = Math.ceil((wordCount / 30) * 60); // Время на базовой скорости
+        const bufferTime = 30; // Запас времени
+        return baseTime + bufferTime;
+    }
+
     function startRace() {
         state.isRacing = true;
         state.restarting = false;
@@ -1245,6 +1252,10 @@
         state.totalChars = 0;
         state.correctChars = 0;
         state.words = state.text.split(' ');
+
+        // Рассчитываем время на основе количества слов
+        const wordCount = state.words.length;
+        state.raceTimeLimit = calculateTimeLimit(wordCount);
 
         const inp = document.getElementById('typingInput');
         inp.disabled = false;
@@ -1273,7 +1284,7 @@
                     inp.disabled = true;
                     showNotification('⏰ Время вышло!');
                     
-                    // Показываем результаты
+
                     if (state.isSolo || Object.values(state.players || {}).every(p => p.finished)) {
                         startAutoRestart();
                     }
@@ -1284,8 +1295,7 @@
 
     function startAutoRestart() {
         state.restarting = true;
-        
-        // Показываем модальное окно с результатами
+
         const modal = document.getElementById('restartModal');
         modal.style.display = 'flex';
         
